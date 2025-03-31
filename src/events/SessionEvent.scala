@@ -9,7 +9,6 @@ import scala.collection.mutable.MutableList
  * Сессия
  * @param timestamp дата и время события
  * @param endTimestamp дата и время окончания сессии
- * @param fileName название файла
  * @param searchEvents список событий поиска
  * @param parsingProblems найденные проблемы про парсинге
  * @param name имя события
@@ -17,7 +16,6 @@ import scala.collection.mutable.MutableList
 case class SessionEvent(
   override val timestamp: Timestamp,
   endTimestamp: Timestamp,
-  fileName: String,
   searchEvents: List[SearchEvent],
   override val parsingProblems: List[Problem],
   override val name: String = "SESSION"

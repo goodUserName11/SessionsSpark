@@ -8,16 +8,15 @@ import java.sql.Timestamp
 import java.util.Date
 import scala.collection.mutable.MutableList
 
-class SessionEventParser{
+class SessionEventParser extends  AbstractEventParser {
   /**
    * Метод парсинга строки в событие
    *
    * @param str строка для парсинга
    * @param datetimePattern шаблон даты для парсинга
-   * @param fileName имя файла
    * @return событие
    */
-  def parse(str: String, datetimePattern: String, fileName: String): SessionEvent = {
+  def parse(str: String, datetimePattern: String): SessionEvent = {
     val cardSearchParser = new CardSearchEventParser()
     val qsSearchParser = new QsEventParser()
 
@@ -35,7 +34,7 @@ class SessionEventParser{
     // Обработка пустой str
     if (str.trim.isEmpty) {
       parsingProblems += Problem(1, "SESSION is empty", str)
-      return SessionEvent(null, null, fileName, List(), parsingProblems.toList)
+      return SessionEvent(null, null, List(), parsingProblems.toList)
     }
 
     // Получение строк события
@@ -164,6 +163,6 @@ class SessionEventParser{
       }
     }
 
-    return SessionEvent(timestamp, endTimestamp, fileName, eventsList.toList, parsingProblems.toList)
+    return SessionEvent(timestamp, endTimestamp, eventsList.toList, parsingProblems.toList)
   }
 }

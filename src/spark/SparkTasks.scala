@@ -3,9 +3,10 @@ package spark
 import events.{CardSearchEvent, QsEvent}
 import parsers.SessionEventParser
 import common.EventsEncoders._
-
+import common.FileSession
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.date_format
+
 import java.nio.charset.Charset
 
 object SparkTasks {
@@ -38,8 +39,10 @@ object SparkTasks {
         Charset.forName("windows-1251")
       )
       val sessionParser: SessionEventParser = new SessionEventParser()
+      val session = sessionParser.parse(s"$strContent", "dd.MM.yyyy_HH:mm:ss");
+      val fileSession = FileSession(filePath, session)
 
-      Some(sessionParser.parse(s"$strContent", datetimePattern, filePath))
+      Some(fileSession)
     }
 
     // Кэширование
@@ -47,10 +50,10 @@ object SparkTasks {
     sessionEvents.cache()
 
     // Разворачиваем список searchEvents из каждого SessionEvent
-    val docsWithId = sessionEvents.flatMap { session =>
+    val docsWithId = sessionEvents.flatMap { fs =>
       // Оставляем только CardSearchEvent
       // и разворачиваем список docsOpened из каждого CardSearchEvent
-      session.searchEvents.filter {
+      fs.sessionEvent.searchEvents.filter {
         case _: CardSearchEvent => true
         case _ => false
       }.flatMap { cardSearch =>
@@ -98,15 +101,17 @@ object SparkTasks {
         Charset.forName("windows-1251")
       )
       val sessionParser: SessionEventParser = new SessionEventParser()
+      val session = sessionParser.parse(s"$strContent", "dd.MM.yyyy_HH:mm:ss");
+      val fileSession = FileSession(filePath, session)
 
-      Some(sessionParser.parse(s"$strContent", datetimePattern, filePath))
+      Some(fileSession)
     }
 
     // Разворачиваем список searchEvents из каждого SessionEvent
-    val docsCountByDate = sessionEvents.flatMap { session =>
+    val docsCountByDate = sessionEvents.flatMap { fs =>
       // Оставляем только QsEvent
       // и разворачиваем список docsOpened из каждого CardSearchEvent
-      session.searchEvents.filter {
+      fs.sessionEvent.searchEvents.filter {
         case _: QsEvent => true
         case _ => false
       }.flatMap { cardSearch =>
