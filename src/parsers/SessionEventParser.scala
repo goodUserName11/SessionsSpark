@@ -99,6 +99,8 @@ class SessionEventParser{
     var currentLine: Int = 0
     // Номер строки, на которой начинается событие поиска
     var searchEventStart: Int = 0
+    // Найдены ли начало и конец события поиска
+    var isSearchEvent: Boolean = false
 
     //foreach закончиться раньше, чем мы добавим все строки (проверять что строка последняя, значит поиск закончился)
     inSession.foreach{ line =>
@@ -106,40 +108,7 @@ class SessionEventParser{
       if(line.startsWith("QS") || line.startsWith("CARD_SEARCH_START")){
         // если начало события не равно текущей строке
         if(searchEventStart != currentLine){
-          // Получение строк внутреннего события
-          // Берем список строк и убираем из него:
-          // первые n строк до searchEventStart
-          // последние n строк до строки currentLine (не включая)
-          val searchEventStr = inSession
-            .take(currentLine)
-            .drop(searchEventStart)
-            .mkString(System.lineSeparator())
-
-          // Событие поиска
-          var searchEvent: SearchEvent = null
-
-          // Парсинг соответствующего события поиска по имени
-          searchEventName match {
-            case "QS" => searchEvent = qsSearchParser.parse(searchEventStr, datetimePattern)
-            case "CARD_SEARCH_START" => searchEvent = cardSearchParser.parse(searchEventStr, datetimePattern)
-            case _ => None
-          }
-
-          // Если событие получено корректно
-          if (searchEvent != null) {
-            // Добавление события к списку
-            eventsList += searchEvent
-            // Поднятие проблем наверх
-            searchEvent.parsingProblems.foreach(problem =>
-              parsingProblems += Problem(
-                // Номер строки из события + текущая строка (если считать с единицы, то она "-1")
-                // + первая строка
-                problem.lineNumber + searchEventStart + 1,
-                problem.description,
-                problem.line
-              )
-            )
-          }
+          isSearchEvent = true
         }
 
         // Получение названия события
@@ -151,6 +120,13 @@ class SessionEventParser{
 
       // Если текущая строка последняя
       if(currentLine == inSession.length){
+        isSearchEvent = true
+      }
+
+      // Если найден конец события поиска
+      if (isSearchEvent){
+        isSearchEvent = false
+
         // Получение строк внутреннего события
         // Берем список строк и убираем из него:
         // первые n строк до searchEventStart
@@ -171,7 +147,7 @@ class SessionEventParser{
         }
 
         // Если событие получено корректно
-        if(searchEvent != null) {
+        if (searchEvent != null) {
           // Добавление события к списку
           eventsList += searchEvent
           // Поднятие проблем наверх
